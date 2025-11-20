@@ -15,7 +15,7 @@ void input() ;
 void update() ;
 void draw() ;
 
-const int MaxHeight = 25, MaxWidth = 70 ;
+int MaxHeight = 25, MaxWidth = 70 ;
 int score = 0 ;
 koordinat kepala, apel, gerak ;
 bool lanjut = true ;
@@ -41,7 +41,6 @@ int main() {
     }
 
     curs_set(1) ;
-    getch() ;
     endwin();
     return 0;
 }
@@ -53,12 +52,15 @@ void init() {
     
     // buat window untuk game snake
     if(widthT <= MaxWidth && heightT <= MaxHeight) {
-        win = newwin(heightT, widthT, 0, 0) ;
-    } else if(widthT <= MaxWidth) {
-        win = newwin(MaxHeight, widthT, 0, 0) ;
-    } else {
-        win = newwin(MaxHeight, MaxWidth, 0, 0) ;
+        MaxHeight = heightT - 2 ;
+        MaxWidth = widthT - 2 ; 
+    } else if (widthT <= MaxWidth) {
+        MaxWidth = widthT - 2 ; 
+    } else if (heightT <= MaxHeight) {
+        MaxHeight = heightT - 2 ;
     }
+    
+    win = newwin(MaxHeight, MaxWidth, 0, 0) ;
     
     box(win, 0, 0) ;
     refresh() ;
