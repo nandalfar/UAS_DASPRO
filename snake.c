@@ -15,7 +15,7 @@ void input() ;
 void update() ;
 void draw() ;
 
-const int MaxHeight = 20, MaxWidth = 60 ;
+const int MaxHeight = 25, MaxWidth = 70 ;
 int score = 0 ;
 koordinat kepala, apel, gerak ;
 bool lanjut = true ;
@@ -29,9 +29,12 @@ int main() {
     curs_set(0) ;
 
     init() ;
-
     while(lanjut) {
         napms(120) ;
+        input() ;
+        update() ;
+        draw() ;
+        napms(50) ;
         input() ;
         update() ;
         draw() ;
@@ -81,11 +84,11 @@ bool cek1 (koordinat a, koordinat b) {
 }
 
 void spawn_apel() {
-    apel.x = 1 + rand() % MaxWidth-2 ; 
-    apel.y = 1 + rand() % MaxHeight ;
+    apel.x = 1 + rand() % (MaxWidth-2) ; 
+    apel.y = 1 + rand() % (MaxHeight-2) ;
     while(cek1(apel, kepala)) {
-        apel.x = 1 + rand() % MaxWidth-2 ; 
-        apel.y = 1 + rand() % MaxHeight ;
+        apel.x = 1 + rand() % (MaxWidth-2); 
+        apel.y = 1 + rand() % (MaxHeight-2) ;
     }
 }
 
@@ -95,21 +98,25 @@ void input() {
     switch (x)
     {
     case KEY_UP:
+        if(gerak.y == 1 || kepala.x >= MaxWidth || kepala.x <= 0) return ;
         gerak.x = 0 ;
         gerak.y = -1 ;
         break;
         
     case KEY_DOWN:
+        if(gerak.y == -1 || kepala.x >= MaxWidth || kepala.x <= 0) return ;
         gerak.x = 0 ;
         gerak.y = 1 ;
         break;
         
     case KEY_RIGHT:
+        if(gerak.x == -1 || kepala.y >= MaxHeight || kepala.y <= 0) return ;
         gerak.x = 1 ;
         gerak.y = 0 ;
         break;
         
     case KEY_LEFT:
+        if(gerak.x == 1 || kepala.y >= MaxHeight || kepala.y <= 0) return ;
         gerak.x = -1 ;
         gerak.y = 0 ;
         break;
@@ -131,14 +138,14 @@ void update() {
 
     mvwaddch(win, kepala.y, kepala.x, ' ') ;
     wrefresh(win) ;
-    kepala.x += gerak.x ;
-    kepala.y += gerak.y ;
+    kepala.x += gerak.x ; if(kepala.x == 0) kepala.x = MaxWidth - 2 ; if(kepala.x == MaxWidth-1) kepala.x = 1 ;
+    kepala.y += gerak.y ; if(kepala.y == 0) kepala.y = MaxHeight - 2 ; if(kepala.y == MaxHeight-1) kepala.y = 1 ;
 }
 
 void draw() {
     mvwaddch(win, kepala.y, kepala.x, 'O') ;
     mvwaddch(win, apel.y, apel.x, '@') ;
     box(win, 0, 0) ;
-    mvwprintw(win, 0, 25, " Score: %d", score) ;
+    mvwprintw(win, 0, 25, " Score: %d ", score) ;
     wrefresh(win) ;
 }
