@@ -1,7 +1,7 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <locale.h>
 
 typedef struct {
     int x ;
@@ -14,8 +14,9 @@ void spawn_apel() ;
 void input() ;
 void update() ;
 void draw() ;
+void gameOver() ;
 
-int MaxHeight = 25, MaxWidth = 70 ;
+int MaxHeight = 25, MaxWidth = 80 ;
 int score = 0 ;
 int pBadan = 0 ;
 koordinat kepala, apel, gerak, badan[1000] ;
@@ -23,6 +24,7 @@ bool lanjut = true ;
 WINDOW * win ;
 
 int main() {
+    setlocale(LC_ALL, "");
     initscr() ;
     cbreak() ;
     noecho() ;
@@ -35,14 +37,18 @@ int main() {
         input() ;
         update() ;
         draw() ;
+
+        if(!lanjut) break ;
+
         napms(50) ;
         input() ;
         update() ;
         draw() ;
     }
 
+    gameOver() ;
+    napms(1000) ;
     curs_set(1) ;
-    getch() ;
     endwin();
     return 0;
 }
@@ -85,6 +91,16 @@ bool cek1 (koordinat a, koordinat b) {
     if(a.y != b.y) return false ;
 
     return true ;
+}
+
+bool cek_mati() {
+    for(int i=0; i<pBadan; i++) {
+        if(kepala.x == badan[i].x && kepala.y == badan[i].y) {
+            lanjut = false ;
+            return true ;
+        }
+    }
+    return false ;
 }
 
 void spawn_apel() {
@@ -140,6 +156,8 @@ void update() {
         score++ ;
     }
 
+    if(cek_mati()) return ;
+
     mvwaddch(win, kepala.y, kepala.x, ' ') ;
     if(pBadan > 0) mvwaddch(win, badan[pBadan-1].y, badan[pBadan-1].x, ' ') ;
     wrefresh(win) ;
@@ -182,4 +200,26 @@ void draw() {
     box(win, 0, 0) ;
     mvwprintw(win, 0, (MaxWidth/2)-(5 + (score/10) ), " Score: %d ", score) ;
     wrefresh(win) ;
+}
+
+void gameOver() {
+    // deklarasi string ASCII yang akan dicetak
+
+    char *text_gameOver[] = {
+    "░██████╗░░█████╗░███╗░░░███╗███████╗  ░█████╗░██╗░░░██╗███████╗██████╗░",
+    "██╔════╝░██╔══██╗████╗░████║██╔════╝  ██╔══██╗██║░░░██║██╔════╝██╔══██╗",
+    "██║░░██╗░███████║██╔████╔██║█████╗░░  ██║░░██║╚██╗░██╔╝█████╗░░██████╔╝",
+    "██║░░╚██╗██╔══██║██║╚██╔╝██║██╔══╝░░  ██║░░██║░╚████╔╝░██╔══╝░░██╔══██╗",
+    "╚██████╔╝██║░░██║██║░╚═╝░██║███████╗  ╚█████╔╝░░╚██╔╝░░███████╗██║░░██║",
+    "░╚═════╝░╚═╝░░╚═╝╚═╝░░░░░╚═╝╚══════╝  ░╚════╝░░░░╚═╝░░░╚══════╝╚═╝░░╚═╝"
+    };
+
+    WINDOW * temp = newwin(MaxHeight-10, MaxWidth, 5, 0) ;
+    box(temp, 0, 0) ;
+    for (int i=0; i<6; i++) {
+        mvwprintw(temp, 1+i, 1, "%s", text_gameOver[i]) ;
+    }
+    refresh() ;
+    wrefresh(temp) ;
+
 }
