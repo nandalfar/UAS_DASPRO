@@ -241,7 +241,7 @@ void gameOver_B(bool Big) {
     if(Big) {
         int midW = (MaxWidth-75)/2 ;
         int midH = (MaxHeight-18)/2 ;
-        temp = newwin(MaxHeight-10, MaxWidth - 2, (MaxHeight-6-2) / 2, startX) ;
+        temp = newwin(MaxHeight-10, MaxWidth - 2, 4, startX) ;
         for (int i=0; i<6; i++) {
             mvwprintw(temp, i+midH, midW, "%s", text_gameOver[i]) ;
         }
