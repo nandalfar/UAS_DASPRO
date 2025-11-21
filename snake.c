@@ -17,7 +17,8 @@ void draw() ;
 
 int MaxHeight = 25, MaxWidth = 70 ;
 int score = 0 ;
-koordinat kepala, apel, gerak ;
+int pBadan = 0 ;
+koordinat kepala, apel, gerak, badan[1000] ;
 bool lanjut = true ;
 WINDOW * win ;
 
@@ -41,6 +42,7 @@ int main() {
     }
 
     curs_set(1) ;
+    getch() ;
     endwin();
     return 0;
 }
@@ -73,7 +75,7 @@ void init() {
     gerak.x = 1 ; gerak.y = 0 ;
     spawn_apel() ;
 
-    mvwaddch(win, kepala.y, kepala.x, 'O') ;
+    mvwaddch(win, kepala.y, kepala.x, '>') ;
     mvwaddch(win, apel.y, apel.x, '@') ;
     wrefresh(win) ;
 }
@@ -139,15 +141,45 @@ void update() {
     }
 
     mvwaddch(win, kepala.y, kepala.x, ' ') ;
+    if(pBadan > 0) mvwaddch(win, badan[pBadan-1].y, badan[pBadan-1].x, ' ') ;
     wrefresh(win) ;
+    
+    if(pBadan > 0) {
+        for (int i=pBadan-1; i>0; i--) {
+            badan [i] = badan [i-1] ;
+        }
+        badan[0] = kepala ;
+    }
+    if(score/3 > pBadan) {
+        if(pBadan == 0) {
+            badan [pBadan].y = kepala.y - gerak.y ;
+            badan [pBadan].x = kepala.x - gerak.x ;
+        }else {
+            badan [pBadan].y = badan[pBadan-1].y - gerak.y ;
+            badan [pBadan].x = badan[pBadan-1].x - gerak.x ;
+        }
+        pBadan++ ;
+    }
     kepala.x += gerak.x ; if(kepala.x == 0) kepala.x = MaxWidth - 2 ; if(kepala.x == MaxWidth-1) kepala.x = 1 ;
     kepala.y += gerak.y ; if(kepala.y == 0) kepala.y = MaxHeight - 2 ; if(kepala.y == MaxHeight-1) kepala.y = 1 ;
 }
 
 void draw() {
-    mvwaddch(win, kepala.y, kepala.x, 'O') ;
+    if(gerak.x == 1) {
+        mvwaddch(win, kepala.y, kepala.x, '>') ;
+    }else if (gerak.x == -1) {
+        mvwaddch(win, kepala.y, kepala.x, '<') ;
+    } else if (gerak.y == 1) {
+        mvwaddch(win, kepala.y, kepala.x, 'v') ;
+    } else {
+        mvwaddch(win, kepala.y, kepala.x, '^') ;
+    }
+    
+    for(int i=0; i<pBadan; i++) {
+        mvwaddch(win, badan[i].y, badan[i].x, 'O') ;
+    }
     mvwaddch(win, apel.y, apel.x, '@') ;
     box(win, 0, 0) ;
-    mvwprintw(win, 0, 25, " Score: %d ", score) ;
+    mvwprintw(win, 0, (MaxWidth/2)-(5 + (score/10) ), " Score: %d ", score) ;
     wrefresh(win) ;
 }
