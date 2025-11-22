@@ -15,11 +15,11 @@ void spawn_apel() ;
 void input() ;
 void update() ;
 void draw() ;
-void gameOver_B(bool Big) ;
+void gameOver() ;
 void endGame() ;
 
 int MaxHeight = 25, MaxWidth = 80 ;
-int MinHeight = 10, MinWidth = 20 ;
+int MinHeight = 25, MinWidth = 80 ;
 int startX, startY = 0 ;
 int score = 0 ;
 int pBadan = 0 ;
@@ -67,20 +67,9 @@ void init() {
             widthT, heightT, MinWidth, MinHeight);
         exit(0);
     }
-    // menetapkan ukuran window untuk snake game
-    if(widthT <= MaxWidth && heightT <= MaxHeight) {
-        startX = 0 ;
-        MaxHeight = heightT - 2 ;
-        MaxWidth = widthT - 2 ; 
-    } else if (widthT <= MaxWidth) {
-        startX = 0 ;
-        MaxWidth = widthT - 2 ; 
-    } else if (heightT <= MaxHeight) {
-        startX = (widthT - MaxWidth - 1 ) / 2 ; 
-        MaxHeight = heightT - 2 ;
-    } else {
-        startX = (widthT - MaxWidth - 1 ) / 2 ; 
-    }
+
+    // menetapkan letak window untuk snake game
+    startX = (widthT - MaxWidth - 1 ) / 2 ; 
     
     win = newwin(MaxHeight, MaxWidth, startY, startX) ;
     
@@ -104,6 +93,7 @@ void endGame() {
     curs_set(1) ;
     endwin();
 }
+
 bool cek1 (koordinat a, koordinat b) {
     if(a.x != b.x) return false ;
     if(a.y != b.y) return false ;
@@ -175,8 +165,7 @@ void update() {
     }
 
     if(cek_mati()){
-        gameOver_B( (MaxHeight >= 18 && MaxWidth >= 75) ) ;
-        napms(4000) ;
+        gameOver() ;
         return ;
     }
 
@@ -224,7 +213,7 @@ void draw() {
     wrefresh(win) ;
 }
 
-void gameOver_B(bool Big) {
+void gameOver() {
     // deklarasi string ASCII yang akan dicetak
 
     const char *text_gameOver[] = {
@@ -238,20 +227,28 @@ void gameOver_B(bool Big) {
 
     WINDOW * temp ;
 
-    if(Big) {
-        int midW = (MaxWidth-75)/2 ;
-        int midH = (MaxHeight-18)/2 ;
-        temp = newwin(MaxHeight-10, MaxWidth - 2, 4, startX) ;
-        for (int i=0; i<6; i++) {
-            mvwprintw(temp, i+midH, midW, "%s", text_gameOver[i]) ;
+    temp = newwin(10, 73, startY+8, startX+3) ;
+
+    for(int i=5; i>0; i--) {  // for loop hitung mundur
+        box(temp, 0, 0) ;
+        mvwprintw(temp, 9, (72-42)/2, " Anda akan keluar dari game dalam %d detik ", i) ;
+
+        for (int j=0; j<6; j++) {   // for loop cetak UI game over
+            mvwprintw(temp, j+2, 1, "%s", text_gameOver[j]) ;
         }
-    }else{
-        temp = newwin(3, MaxWidth, (MaxHeight-3-2) / 2, startX) ;
-        mvwprintw(temp, 1, 1, "GAME OVER") ;
+        refresh() ;
+        wrefresh(temp) ;
+
+        // flickering
+        napms(750) ;
+        for (int j=1; j<=8; j++) {
+            for(int k=1; k<=71; k++) {
+                mvwaddch(temp, j, k, ' ') ;
+            }
+        }
+        wrefresh(temp) ;
+        napms(250) ;
     }
-    box(temp, 0, 0) ;
     
-    refresh() ;
-    wrefresh(temp) ;
 
 }
