@@ -6,6 +6,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#define min(a,b) ((a) < (b) ? (a) : (b))
+
 typedef struct {
     int x ;
     int y ;
@@ -102,6 +104,52 @@ bool cek_mati() {
     return false ;
 }
 
+void merge(player arr[], int l, int m, int r) {
+    int n1 = m - l + 1 ;
+    int n2 = r - m ;
+
+    player L[n1], R[n2] ;
+
+    for(int i=0; i<n1; i++) L[i] = arr[l + i] ;
+    for(int i=0; i<n2; i++) R[i] = arr[m + i + 1] ;
+    
+    int i = 0, j = 0, k = l;
+
+    while(i < n1 && j < n2) {
+        if(L[i].bestScore >= R[j].bestScore) {
+            arr[k] = L[i] ;
+            i++ ;
+        }else {
+            arr[k] = R[j] ;
+            j++ ;
+        }
+        k++ ;
+    }
+
+    while(i < n1) {
+        arr[k] = L[i] ;
+        i++ ;
+        k++ ;
+    }
+
+    while(j < n2){
+        arr[k] = R[j] ;
+        j++ ;
+        k++ ;
+    }
+}
+
+void mergeSort(player arr[], int l, int r) {
+    if(l < r) {
+        int m = l + (r - l) /2 ;
+
+        mergeSort(arr, l, m) ; 
+        mergeSort(arr, m+1, r) ;
+
+        merge(arr, l, m, r) ;
+    }
+}
+
 void cariUSN (char *targetName) {
     FILE *file = fopen("dataPlayer.dat", "rb+");
     if (!file) return;
@@ -113,6 +161,7 @@ void cariUSN (char *targetName) {
 
         if (strcmp(temp.username, targetName) == 0) {
             iPlayer = index ; 
+            playerNow.bestScore = temp.bestScore ;
             break;
         }
         index++ ;
@@ -143,7 +192,7 @@ void saveNScore() {
     fseek(file, iPlayer * sizeof(player), SEEK_SET);
 
     // Tulis data baru di posisi itu
-    fwrite(&playerNow, sizeof(pBadan), 1, file);
+    fwrite(&playerNow, sizeof(player), 1, file);
 
     fclose(file);
 }
@@ -271,8 +320,7 @@ void inputUSN(char *usn, WINDOW * logP) {
         }
         
         // batasi panjang input
-        if (index >= 25)
-        continue;
+        if (index >= 25) continue;
         
         // hanya izinkan huruf/angka/spasi (opsional)
         if (isprint(ch)) {
@@ -282,6 +330,8 @@ void inputUSN(char *usn, WINDOW * logP) {
             wrefresh(logP);
         }
     }
+
+    usn[index] = '\0' ;
 }
 
 bool konfirmNP() {
@@ -336,7 +386,6 @@ bool konfirmNP() {
         }
     }
     
-    napms(500) ;
     delWin(newP) ;
     if(highlight == 0) return true ;
     else return false ;
@@ -347,7 +396,7 @@ void loginProses() {
     WINDOW * logP = newwin(5, 30, 15, mid) ;
     box(logP, 0, 0) ;
     mvwprintw(logP, 0, 2, "Masukkan USN (MAX 25)") ;
-    mvwprintw(logP, 2, 1, "> ");
+    mvwprintw(logP, 2, 1, ">");
     refresh() ;
     wrefresh(logP) ;
     
@@ -356,17 +405,23 @@ void loginProses() {
     inputUSN(usn, logP) ;
     cariUSN(usn) ;
 
-    delWin(logP) ;
     if(iPlayer == -1) {
-
         if(!konfirmNP()){
+            delWin(logP) ;
             return ;   
+        }else{
+            strcpy(playerNow.username, usn);
+            playerNow.bestScore = 0 ;
+            saveNPlayer() ;
+            cariUSN(playerNow.username) ;
         }
     }
-
+    
     login = true ;
     strcpy(playerNow.username, usn);
+    playerNow.bestScore = 
     napms(700) ;
+    delWin(logP) ;
 }
 
 void delWin(WINDOW * tmp) {
@@ -394,6 +449,61 @@ void draw() {
     box(snakeWin, 0, 0) ;
     mvwprintw(snakeWin, 0, (MaxWidth/2)-(5 + (score/10) ), " Score: %d ", score) ;
     wrefresh(snakeWin) ;
+}
+
+void leaderboard(int WidthM) {
+    FILE *file = fopen("dataPlayer.dat", "rb");
+    if (!file) return;
+
+    player allPlayer [100] ;
+    player tmp ;
+    int index = 0 ;
+    while (fread(&tmp, sizeof(player), 1, file) == 1) {
+        allPlayer[index] = tmp ;
+        index++ ;
+    }
+
+    fclose(file) ;
+
+    if(index == 0)return ;
+
+    mergeSort(allPlayer, 0, index-1) ;
+    
+    const char *leaderText[] = {
+        "█░░ █▀▀ █▀▀█ █▀▀▄ █▀▀ █▀▀█ █▀▀▄ █▀▀█ █▀▀█ █▀▀█ █▀▀▄",
+        "█░░ █▀▀ █▄▄█ █░░█ █▀▀ █▄▄▀ █▀▀▄ █░░█ █▄▄█ █▄▄▀ █░░█",
+        "▀▀▀ ▀▀▀ ▀░░▀ ▀▀▀░ ▀▀▀ ▀░▀▀ ▀▀▀░ ▀▀▀▀ ▀░░▀ ▀░▀▀ ▀▀▀░"
+    };
+
+    int m = (WidthM-2-53)/2 + startX ;
+    WINDOW * leaderTitle = newwin(5, 53, 4, m) ;
+    for(int i=0; i<3; i++){
+        mvwprintw(leaderTitle, i+1, 1, "%s", leaderText[i]) ;
+    }
+    
+    refresh() ;
+    wrefresh(leaderTitle) ;
+
+    m = (WidthM-2-35)/2 + startX ;
+    WINDOW * leaderP = newwin(21, 35, 11, m) ;
+    box(leaderP, 0, 0) ;
+    mvwprintw(leaderP, 21, 2, " Press any key to return " );
+    refresh() ;
+
+    for(int i=0; i<min(index, 10); i++) {
+        mvwprintw(leaderP, i+1+i, 1, "%s", allPlayer[i].username) ;
+
+        int j ;
+        for(j=strlen(allPlayer[i].username)+1; j<=30; j++) {
+            mvwprintw(leaderP, i+1+i, j, " ") ;
+        }
+        mvwprintw(leaderP, i+1, j, "%d", allPlayer[i].bestScore) ;
+    }
+    wrefresh(leaderP) ;
+
+    wgetch(leaderP) ;
+    delWin(leaderTitle) ;
+    delWin(leaderP) ;
 }
 
 void gameOver() {
@@ -435,7 +545,7 @@ void gameOver() {
     delWin(temp) ;
 }
 
-void titleUI(int WithM, WINDOW * titleWin) {
+void titleUI(int WidthM, WINDOW * titleWin) {
 
     // buat title
     const char *title[] = {
@@ -446,28 +556,27 @@ void titleUI(int WithM, WINDOW * titleWin) {
         "▀█████▀░░░▀███▀░░░▀██▀"
     };
     
-    refresh() ;
-    
     for(int i=0; i<5; i++) {
         mvwprintw(titleWin, i+1, 1, "%s", title[i]) ;
     }
     wrefresh(titleWin) ;
 }
 
-int pilihanMenu(int WithM, WINDOW * mainMenu) {
+int pilihanMenu(int WidthM, WINDOW * mainMenu) {
     // pilihan
     char *choices [] = {
         "New Game",
         "Leaderboard",
         "Quit",
-        "Login",
-        "switch accounts"
+        "Login"
     };
     
+    if(login) choices[3] = "Logout" ;
+
     int highlight = 0 ;
     int enter = false ;
-    int m = (WithM-2-17)/2 + startX ;
-    WINDOW * pilihan = newwin(9, 17, 15, m) ;
+    int m = (WidthM-2-17)/2 + startX ;
+    WINDOW * pilihan = newwin(11, 17, 15, m) ;
     keypad(pilihan, true) ;
     refresh() ;
     
@@ -475,17 +584,16 @@ int pilihanMenu(int WithM, WINDOW * mainMenu) {
     wrefresh(mainMenu) ;
     
     while(!enter) {
-        for(int i=0; i<5; i++) {\
-            if(!login && i==4)continue ;
-            
+        for(int i=0; i<4; i++) {
             if(i==highlight) {
                 wattron(pilihan, A_REVERSE) ;
-                mvwprintw(pilihan, i+1+i, (15-strlen(choices[i])+1) / 2 + 1, "%s", choices[i]) ;
+                mvwprintw(pilihan, i+1+i, (15-strlen(choices[i])-1) / 2 + 1, "%s", choices[i]) ;
                 wattroff(pilihan, A_REVERSE) ;
             } else {
-                mvwprintw(pilihan, i+1+i, (15-strlen(choices[i])+1) / 2 + 1, "%s", choices[i]) ;
+                mvwprintw(pilihan, i+1+i, (15-strlen(choices[i])-1) / 2 + 1, "%s", choices[i]) ;
             }
         }
+
         wrefresh(pilihan) ;
         
         int g = wgetch(pilihan) ;
@@ -509,6 +617,7 @@ int pilihanMenu(int WithM, WINDOW * mainMenu) {
     }
     
     napms(1000) ;
+    delWin(pilihan) ;
     return highlight ;
 }
 
@@ -517,7 +626,7 @@ startGame1:
     // cek ukuran terminal user
     getmaxyx(stdscr, heightT, widthT) ;
     
-    int HeightM = 35, WithM = 80 ;
+    int HeightM = 35, WidthM = 80 ;
     if(heightT < MinHeight || widthT < MinWidth){
         endGame() ;
         fprintf(stderr,
@@ -527,27 +636,28 @@ startGame1:
             exit(0);
         }
         
-        // menetapkan letak window untuk snake game dan menu utama
-        startX = (widthT - MaxWidth - 1 ) / 2 ; 
-        
-        // buat window untuk main menu
-        WINDOW * mainMenu = newwin(HeightM, WithM, startY, startX) ;
-        box(mainMenu, 0, 0) ;
-        refresh() ;
-        wrefresh(mainMenu) ;
-        
-        int m = (WithM-2-24)/2 + startX ;
-        WINDOW * titleWin = newwin(7, 24, 2, m) ;
-        titleUI(WithM, titleWin) ;
-
+    // menetapkan letak window untuk snake game dan menu utama
+    startX = (widthT - MaxWidth - 1 ) / 2 ; 
+    
+    // buat window untuk main menu
+    WINDOW * mainMenu = newwin(HeightM, WidthM, startY, startX) ;
+    refresh() ;
 
 startGame2:
-    switch (pilihanMenu(WithM, mainMenu))
+    int m = (WidthM-2-24)/2 + startX ;
+    WINDOW * titleWin = newwin(7, 24, 4, m) ;
+    refresh() ;
+    
+startGame3:
+    box(mainMenu, 0, 0) ;
+    wrefresh(mainMenu) ;
+    titleUI(WidthM, titleWin) ;
+    switch (pilihanMenu(WidthM, mainMenu))
     {
         case 0:  // main ular 
         if(!login) {
             loginMessage() ;
-            goto startGame2 ;
+            goto startGame3 ;
         } 
         delWin(mainMenu) ;
         delWin(titleWin) ;
@@ -576,15 +686,23 @@ startGame2:
         break;
         
         case 1:
+            delWin(titleWin) ;
+            leaderboard(WidthM) ;
+            goto startGame2 ;
             break ;
         case 2:  //quit game
             delWin(mainMenu) ;
             delWin(titleWin) ;
             endGame() ;
             break ;
-        case 3:  // login
-            loginProses() ;
-            goto startGame2 ;
+        case 3:  // login & logout
+            if(login) {
+                login = false ;
+                iPlayer = -1 ;
+            }else{
+                loginProses() ;
+            }
+            goto startGame3 ;
             break ;
         default:
         break;
