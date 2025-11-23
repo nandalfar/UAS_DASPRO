@@ -32,8 +32,8 @@ int MaxHeight = 25, MaxWidth = 80 ;
 int MinHeight = 35, MinWidth = 80 ;
 int heightT, widthT ;
 int startX, startY = 0 ;
-int score = 0 ;
-int pBadan = 0 ;
+int score ;
+int pBadan ;
 int iPlayer = -1 ;
 bool lanjut = true ;
 bool login = false ;
@@ -55,7 +55,9 @@ int main() {
 }
 
 void initSnake() {
-    
+    lanjut = true ;
+    pBadan = 0 ;
+    score = 0 ;
     snakeWin = newwin(MaxHeight, MaxWidth, startY, startX) ;
     box(snakeWin, 0, 0) ;
     refresh() ;
@@ -91,6 +93,11 @@ bool cek_mati() {
             lanjut = false ;
             return true ;
         }
+    }
+
+    if(kepala.x == 0 || kepala.x == MaxWidth-1 || kepala.y == 0 || kepala.y == MaxHeight-1){
+        lanjut = false ;
+        return true ;
     }
     return false ;
 }
@@ -156,25 +163,25 @@ void input() {
     switch (x)
     {
         case KEY_UP:
-        if(gerak.y == 1 || kepala.x >= (MaxWidth-1) || kepala.x <= 0) return ;
+        if(gerak.y == 1) return ;
         gerak.x = 0 ;
         gerak.y = -1 ;
         break;
         
         case KEY_DOWN:
-        if(gerak.y == -1 || kepala.x >= (MaxWidth-1) || kepala.x <= 0) return ;
+        if(gerak.y == -1) return ;
         gerak.x = 0 ;
         gerak.y = 1 ;
         break;
         
         case KEY_RIGHT:
-        if(gerak.x == -1 || kepala.y >= (MaxHeight-1) || kepala.y <= 0) return ;
+        if(gerak.x == -1) return ;
         gerak.x = 1 ;
         gerak.y = 0 ;
         break;
         
         case KEY_LEFT:
-        if(gerak.x == 1 || kepala.y >= (MaxHeight-1) || kepala.y <= 0) return ;
+        if(gerak.x == 1) return ;
         gerak.x = -1 ;
         gerak.y = 0 ;
         break;
@@ -222,8 +229,8 @@ void update() {
         }
         pBadan++ ;
     }
-    kepala.x += gerak.x ; if(kepala.x == 0) kepala.x = (MaxWidth - 2) ; if(kepala.x == MaxWidth - 1) kepala.x = 1 ;
-    kepala.y += gerak.y ; if(kepala.y == 0) kepala.y = (MaxHeight - 2) ; if(kepala.y == MaxHeight - 1) kepala.y = 1 ;
+    kepala.x += gerak.x ;
+    kepala.y += gerak.y ;
 }
 
 void loginMessage() {
@@ -407,7 +414,7 @@ void gameOver() {
     
     for(int i=5; i>0; i--) {  // for loop hitung mundur
         box(temp, 0, 0) ;
-        mvwprintw(temp, 9, (72-42)/2, " Anda akan keluar dari game dalam %d detik ", i) ;
+        mvwprintw(temp, 9, (72-48)/2, " Anda akan kembali ke menu utama dalam %d detik ", i) ;
         
         for (int j=0; j<6; j++) {   // for loop cetak UI game over
             mvwprintw(temp, j+2, 1, "%s", text_gameOver[j]) ;
@@ -425,7 +432,7 @@ void gameOver() {
         wrefresh(temp) ;
         napms(250) ;
     }
-    
+    delWin(temp) ;
 }
 
 void titleUI(int WithM, WINDOW * titleWin) {
@@ -506,6 +513,7 @@ int pilihanMenu(int WithM, WINDOW * mainMenu) {
 }
 
 void menuUtama() {
+startGame1:
     // cek ukuran terminal user
     getmaxyx(stdscr, heightT, widthT) ;
     
@@ -527,21 +535,19 @@ void menuUtama() {
         box(mainMenu, 0, 0) ;
         refresh() ;
         wrefresh(mainMenu) ;
-        getch() ;
         
         int m = (WithM-2-24)/2 + startX ;
         WINDOW * titleWin = newwin(7, 24, 2, m) ;
         titleUI(WithM, titleWin) ;
 
 
-startGame: 
-    
+startGame2:
     switch (pilihanMenu(WithM, mainMenu))
     {
         case 0:  // main ular 
         if(!login) {
             loginMessage() ;
-            goto startGame ;
+            goto startGame2 ;
         } 
         delWin(mainMenu) ;
         delWin(titleWin) ;
@@ -561,10 +567,12 @@ startGame:
             update() ;
             draw() ;
         }
-        
+
         if(iPlayer == -1) saveNPlayer() ;
         else saveNScore() ;
-        goto startGame ;
+        wclear(snakeWin) ;
+        wrefresh(snakeWin) ;
+        goto startGame1 ;
         break;
         
         case 1:
@@ -576,7 +584,7 @@ startGame:
             break ;
         case 3:  // login
             loginProses() ;
-            goto startGame ;
+            goto startGame2 ;
             break ;
         default:
         break;
