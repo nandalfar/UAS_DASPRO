@@ -47,7 +47,6 @@ WINDOW * snakeWin ;
 int main() {
     initNcurses() ;
     menuUtama() ;
-    // getch() ;
     return 0;
 }
 
@@ -490,7 +489,7 @@ void leaderboard(int WidthM) {
     m = (WidthM-2-35)/2 + startX ;
     WINDOW * leaderP = newwin(21, 35, 11, m) ;
     box(leaderP, 0, 0) ;
-    mvwprintw(leaderP, 21, 2, " Press any key to return " );
+    mvwprintw(leaderP, 20, 2, " Press any key to return " );
     refresh() ;
 
     for(int i=0; i<min(index, 10); i++) {
@@ -500,7 +499,7 @@ void leaderboard(int WidthM) {
         for(j=strlen(allPlayer[i].username)+1; j<=30; j++) {
             mvwprintw(leaderP, i+1+i, j, " ") ;
         }
-        mvwprintw(leaderP, i+1, j, "%d", allPlayer[i].bestScore) ;
+        mvwprintw(leaderP, i+1+i, j, "%d", allPlayer[i].bestScore) ;
     }
     wrefresh(leaderP) ;
 
@@ -552,8 +551,8 @@ void titleUI(int WidthM, WINDOW * titleWin) {
 
     // buat title
     const char *title[] = {
-        "▄▄▀█▄───▄───────▄",
-        "▀▀▀██──███─────███",
+        "▄▄▀█▄   ▄       ▄",
+        "▀▀▀██──███ ─── ███",
         "░▄██▀░█████░░░█████░░",
         "███▀▄███░███░███░███░▄",
         "▀█████▀░░░▀███▀░░░▀██▀"
@@ -681,8 +680,7 @@ startGame3:
             draw() ;
         }
 
-        if(iPlayer == -1) saveNPlayer() ;
-        else saveNScore() ;
+        saveNScore() ;
         wclear(snakeWin) ;
         wrefresh(snakeWin) ;
         goto startGame1 ;
