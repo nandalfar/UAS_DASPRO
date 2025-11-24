@@ -29,8 +29,9 @@ void gameOver() ;
 void endGame() ;
 void menuUtama() ;
 void delWin(WINDOW * tmp) ;
+void initNcurses() ;
 
-int MaxHeight = 25, MaxWidth = 80 ;
+int gameHeight = 25, gameWidth = 80 ;
 int MinHeight = 35, MinWidth = 80 ;
 int heightT, widthT ;
 int startX, startY = 0 ;
@@ -44,23 +45,25 @@ player playerNow ;
 WINDOW * snakeWin ;
 
 int main() {
+    initNcurses() ;
+    menuUtama() ;
+    // getch() ;
+    return 0;
+}
+
+void initNcurses() {
     setlocale(LC_ALL, "");
     initscr() ;
     cbreak() ;
     noecho() ;
-    
     curs_set(0) ;
-
-    menuUtama() ;
-    // getch() ;
-    return 0;
 }
 
 void initSnake() {
     lanjut = true ;
     pBadan = 0 ;
     score = 0 ;
-    snakeWin = newwin(MaxHeight, MaxWidth, startY, startX) ;
+    snakeWin = newwin(gameHeight, gameWidth, startY, startX) ;
     box(snakeWin, 0, 0) ;
     refresh() ;
     wrefresh(snakeWin) ;
@@ -97,7 +100,7 @@ bool cek_mati() {
         }
     }
 
-    if(kepala.x == 0 || kepala.x == MaxWidth-1 || kepala.y == 0 || kepala.y == MaxHeight-1){
+    if(kepala.x == 0 || kepala.x == gameWidth-1 || kepala.y == 0 || kepala.y == gameHeight-1){
         lanjut = false ;
         return true ;
     }
@@ -198,11 +201,11 @@ void saveNScore() {
 }
 
 void spawn_apel() {
-    apel.x = 1 + rand() % (MaxWidth - 2) ; 
-    apel.y = 1 + rand() % (MaxHeight - 2) ;
+    apel.x = 1 + rand() % (gameWidth - 2) ; 
+    apel.y = 1 + rand() % (gameHeight - 2) ;
     while(cek1(apel, kepala)) {
-        apel.x = 1 + rand() % (MaxWidth - 2); 
-        apel.y = 1 + rand() % (MaxHeight - 2) ;
+        apel.x = 1 + rand() % (gameWidth - 2); 
+        apel.y = 1 + rand() % (gameHeight - 2) ;
     }
 }
 
@@ -447,7 +450,7 @@ void draw() {
     }
     mvwaddch(snakeWin, apel.y, apel.x, '@') ;
     box(snakeWin, 0, 0) ;
-    mvwprintw(snakeWin, 0, (MaxWidth/2)-(5 + (score/10) ), " Score: %d ", score) ;
+    mvwprintw(snakeWin, 0, (gameWidth/2)-(5 + (score/10) ), " Score: %d ", score) ;
     wrefresh(snakeWin) ;
 }
 
@@ -637,7 +640,7 @@ startGame1:
         }
         
     // menetapkan letak window untuk snake game dan menu utama
-    startX = (widthT - MaxWidth - 1 ) / 2 ; 
+    startX = (widthT - gameWidth - 1 ) / 2 ; 
     
     // buat window untuk main menu
     WINDOW * mainMenu = newwin(HeightM, WidthM, startY, startX) ;
