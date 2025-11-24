@@ -30,6 +30,8 @@ void endGame() ;
 void menuUtama() ;
 void delWin(WINDOW * tmp) ;
 void initNcurses() ;
+void initColor() ;
+void charWcolor(WINDOW * curWin, int y, int x, char s, int color) ;
 
 int gameHeight = 25, gameWidth = 80 ;
 int MinHeight = 35, MinWidth = 80 ;
@@ -46,8 +48,18 @@ WINDOW * snakeWin ;
 
 int main() {
     initNcurses() ;
+    initColor() ;
     menuUtama() ;
     return 0;
+}
+
+void initColor() {
+    start_color() ;
+    use_default_colors() ;
+    init_pair(1, COLOR_RED, -1);
+    init_pair(2, COLOR_GREEN, -1);
+    init_pair(3, COLOR_YELLOW, -1);
+    init_pair(4, COLOR_BLACK, COLOR_YELLOW);
 }
 
 void initNcurses() {
@@ -74,14 +86,32 @@ void initSnake() {
     gerak.x = 1 ; gerak.y = 0 ;
     spawn_apel() ;
     
-    mvwaddch(snakeWin, kepala.y, kepala.x, '>') ;
-    mvwaddch(snakeWin, apel.y, apel.x, '@') ;
+    charWcolor(snakeWin, kepala.y, kepala.x, '>', 2) ;
+    charWcolor(snakeWin, apel.y, apel.x, '@', 1) ;
     wrefresh(snakeWin) ;
 }
 
 void endGame() {
     curs_set(1) ;
     endwin();
+}
+
+void printWcolor(WINDOW * curWin, int y, int x, char *s, int color) {
+    wattron(curWin, COLOR_PAIR(color)) ;
+    mvwprintw(curWin, y, x, "%s", s) ;
+    wattroff(curWin, COLOR_PAIR(color)) ;
+}
+
+void charWcolor(WINDOW * curWin, int y, int x, char s, int color) {
+    wattron(curWin, COLOR_PAIR(color)) ;
+    mvwaddch(curWin, y, x, s) ;
+    wattroff(curWin, COLOR_PAIR(color)) ;
+}
+
+void colorBox(WINDOW * curWin, int color) {
+    wattron(curWin, COLOR_PAIR(color)) ;
+    box(curWin, 0, 0) ;
+    wattroff(curWin, COLOR_PAIR(color)) ;
 }
 
 bool cek1 (koordinat a, koordinat b) {
@@ -287,13 +317,19 @@ void update() {
 void loginMessage() {
     int mid = (widthT - 36 - 1 ) / 2  ;
     WINDOW * logM = newwin(3, 36, 14, mid) ;
-    wattron(logM, A_REVERSE) ;
-    box(logM, 0, 0) ;
-    wattroff(logM, A_REVERSE) ;
-    mvwprintw(logM, 1, 1, "ANDA HARUS LOGIN TERLEBIH DAHULU!!") ;
+    printWcolor(logM, 1, 1, "ANDA HARUS LOGIN TERLEBIH DAHULU!!", 3) ;
     refresh() ;
     wrefresh(logM) ;
-    napms(3000) ;
+
+    for(int i=0; i<5; i++) {
+        colorBox(logM, 4) ;
+        wrefresh(logM) ;
+        napms(600) ;
+
+        colorBox(logM, 3) ;
+        wrefresh(logM) ;
+        napms(400) ;
+    }
     delWin(logM) ;  
 }
 
@@ -340,8 +376,8 @@ bool konfirmNP() {
     int mid = (widthT - 50 - 1 ) / 2 ;
     WINDOW * newP = newwin(4, 50, 15, mid) ;
     keypad(newP, true) ;
-    box(newP, 0, 0) ;
-    mvwprintw(newP, 0, 2, " USN anda tidak ada, ingin membuat USN baru ? ") ;
+    colorBox(newP, 3) ;
+    printWcolor(newP, 0, 2, " USN anda tidak ada, ingin membuat USN baru ? ", 3) ;
     refresh() ;
 
     char *yn[] = {
@@ -356,11 +392,9 @@ bool konfirmNP() {
         int x = 13 ;
         for(int i=0; i<2; i++) {
             if(i==highlight) {
-                wattron(newP, A_REVERSE) ;
-                mvwprintw(newP, 2, x, yn[i]) ;
-                wattroff(newP, A_REVERSE) ;
+                printWcolor(newP, 2, x, yn[i], 4) ;
             }else{
-                mvwprintw(newP, 2, x, yn[i]) ;
+                printWcolor(newP, 2, x, yn[i], 3) ;
             }
             x = 30 ;
         }
@@ -396,9 +430,9 @@ bool konfirmNP() {
 void loginProses() {
     int mid = (widthT - 30 - 1 ) / 2  ;
     WINDOW * logP = newwin(5, 30, 15, mid) ;
-    box(logP, 0, 0) ;
-    mvwprintw(logP, 0, 2, "Masukkan USN (MAX 25)") ;
-    mvwprintw(logP, 2, 1, ">");
+    colorBox(logP, 3) ;
+    printWcolor(logP, 0, 2, " Masukkan USN (MAX 25) ", 3) ;
+    charWcolor(logP, 2, 1, '>', 3) ;
     refresh() ;
     wrefresh(logP) ;
     
@@ -435,20 +469,20 @@ void delWin(WINDOW * tmp) {
 
 void draw() {
     if(gerak.x == 1) {
-        mvwaddch(snakeWin, kepala.y, kepala.x, '>') ;
+        charWcolor(snakeWin, kepala.y, kepala.x, '>', 2) ;
     }else if (gerak.x == -1) {
-        mvwaddch(snakeWin, kepala.y, kepala.x, '<') ;
+        charWcolor(snakeWin, kepala.y, kepala.x, '<', 2) ;
     } else if (gerak.y == 1) {
-        mvwaddch(snakeWin, kepala.y, kepala.x, 'v') ;
+        charWcolor(snakeWin, kepala.y, kepala.x, 'v', 2) ;
     } else {
-        mvwaddch(snakeWin, kepala.y, kepala.x, '^') ;
+        charWcolor(snakeWin, kepala.y, kepala.x, '^', 2) ;
     }
     
     for(int i=0; i<pBadan; i++) {
-        mvwaddch(snakeWin, badan[i].y, badan[i].x, 'O') ;
+        printWcolor(snakeWin, badan[i].y, badan[i].x, "●", 2) ;
     }
-    mvwaddch(snakeWin, apel.y, apel.x, '@') ;
-    box(snakeWin, 0, 0) ;
+    charWcolor(snakeWin, apel.y, apel.x, '@', 1) ;
+    colorBox(snakeWin, 3) ;
     mvwprintw(snakeWin, 0, (gameWidth/2)-(5 + (score/10) ), " Score: %d ", score) ;
     wrefresh(snakeWin) ;
 }
@@ -471,7 +505,7 @@ void leaderboard(int WidthM) {
 
     mergeSort(allPlayer, 0, index-1) ;
     
-    const char *leaderText[] = {
+    char *leaderText[] = {
         "█░░ █▀▀ █▀▀█ █▀▀▄ █▀▀ █▀▀█ █▀▀▄ █▀▀█ █▀▀█ █▀▀█ █▀▀▄",
         "█░░ █▀▀ █▄▄█ █░░█ █▀▀ █▄▄▀ █▀▀▄ █░░█ █▄▄█ █▄▄▀ █░░█",
         "▀▀▀ ▀▀▀ ▀░░▀ ▀▀▀░ ▀▀▀ ▀░▀▀ ▀▀▀░ ▀▀▀▀ ▀░░▀ ▀░▀▀ ▀▀▀░"
@@ -480,7 +514,7 @@ void leaderboard(int WidthM) {
     int m = (WidthM-2-53)/2 + startX ;
     WINDOW * leaderTitle = newwin(5, 53, 4, m) ;
     for(int i=0; i<3; i++){
-        mvwprintw(leaderTitle, i+1, 1, "%s", leaderText[i]) ;
+        printWcolor(leaderTitle, i+1, 1, leaderText[i], 3) ;
     }
     
     refresh() ;
@@ -488,7 +522,7 @@ void leaderboard(int WidthM) {
 
     m = (WidthM-2-35)/2 + startX ;
     WINDOW * leaderP = newwin(21, 35, 11, m) ;
-    box(leaderP, 0, 0) ;
+    colorBox(leaderP, 3) ;
     mvwprintw(leaderP, 20, 2, " Press any key to return " );
     refresh() ;
 
@@ -511,7 +545,7 @@ void leaderboard(int WidthM) {
 void gameOver() {
     // deklarasi string ASCII yang akan dicetak
     
-    const char *text_gameOver[] = {
+    char *text_gameOver[] = {
         "░██████╗░░█████╗░███╗░░░███╗███████╗  ░█████╗░██╗░░░██╗███████╗██████╗░",
         "██╔════╝░██╔══██╗████╗░████║██╔════╝  ██╔══██╗██║░░░██║██╔════╝██╔══██╗",
         "██║░░██╗░███████║██╔████╔██║█████╗░░  ██║░░██║╚██╗░██╔╝█████╗░░██████╔╝",
@@ -525,11 +559,11 @@ void gameOver() {
     temp = newwin(10, 73, startY+8, startX+3) ;
     
     for(int i=5; i>0; i--) {  // for loop hitung mundur
-        box(temp, 0, 0) ;
+        colorBox(temp, 3) ;
         mvwprintw(temp, 9, (72-48)/2, " Anda akan kembali ke menu utama dalam %d detik ", i) ;
         
         for (int j=0; j<6; j++) {   // for loop cetak UI game over
-            mvwprintw(temp, j+2, 1, "%s", text_gameOver[j]) ;
+            printWcolor(temp, j+2, 1, text_gameOver[j], 3) ;
         }
         refresh() ;
         wrefresh(temp) ;
@@ -550,7 +584,7 @@ void gameOver() {
 void titleUI(int WidthM, WINDOW * titleWin) {
 
     // buat title
-    const char *title[] = {
+    char *title[] = {
         "▄▄▀█▄   ▄       ▄",
         "▀▀▀██──███ ─── ███",
         "░▄██▀░█████░░░█████░░",
@@ -559,7 +593,7 @@ void titleUI(int WidthM, WINDOW * titleWin) {
     };
     
     for(int i=0; i<5; i++) {
-        mvwprintw(titleWin, i+1, 1, "%s", title[i]) ;
+        printWcolor(titleWin, i+1, 1, title[i], 3) ;
     }
     wrefresh(titleWin) ;
 }
@@ -588,11 +622,9 @@ int pilihanMenu(int WidthM, WINDOW * mainMenu) {
     while(!enter) {
         for(int i=0; i<4; i++) {
             if(i==highlight) {
-                wattron(pilihan, A_REVERSE) ;
-                mvwprintw(pilihan, i+1+i, (15-strlen(choices[i])-1) / 2 + 1, "%s", choices[i]) ;
-                wattroff(pilihan, A_REVERSE) ;
+                printWcolor(pilihan, i+1+i, (15-strlen(choices[i])-1) / 2 + 1, choices[i], 4) ;
             } else {
-                mvwprintw(pilihan, i+1+i, (15-strlen(choices[i])-1) / 2 + 1, "%s", choices[i]) ;
+                printWcolor(pilihan, i+1+i, (15-strlen(choices[i])-1) / 2 + 1, choices[i], 3) ;
             }
         }
 
@@ -651,7 +683,7 @@ startGame2:
     refresh() ;
     
 startGame3:
-    box(mainMenu, 0, 0) ;
+    colorBox(mainMenu, 3) ;
     wrefresh(mainMenu) ;
     titleUI(WidthM, titleWin) ;
     switch (pilihanMenu(WidthM, mainMenu))
