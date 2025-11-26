@@ -6,8 +6,9 @@
 #include <ctype.h>
 #include "snake.c"
 
-#define min(a,b) ((a) < (b) ? (a) : (b))
+#define min(a,b) ((a) < (b) ? (a) : (b))  // mengembalikan nilai terkecil dari a dan b
 
+// struct player
 typedef struct 
 {
     char username[25] ;
@@ -22,6 +23,7 @@ bool lanjut ;
 bool login = false ;
 player playerNow ;
 
+// inisialisasi warna untuk dipakai nanti
 void initColor() {
     start_color() ;
     use_default_colors() ;
@@ -31,6 +33,7 @@ void initColor() {
     init_pair(4, COLOR_BLACK, COLOR_YELLOW);
 }
 
+// inisialisasi ncurses (memulai program ncurses)
 void initNcurses() {
     setlocale(LC_ALL, "");
     initscr() ;
@@ -39,6 +42,7 @@ void initNcurses() {
     curs_set(0) ;
 }
 
+// menggabungkan bagian-bagian yg sudah dibagi oleh mergeSort
 void merge(player arr[], int l, int m, int r) {
     int n1 = m - l + 1 ;
     int n2 = r - m ;
@@ -74,6 +78,7 @@ void merge(player arr[], int l, int m, int r) {
     }
 }
 
+// sorting merge untuk mengurutkan player dari score terbesar
 void mergeSort(player arr[], int l, int r) {
     if(l < r) {
         int m = l + (r - l) /2 ;
@@ -85,6 +90,7 @@ void mergeSort(player arr[], int l, int r) {
     }
 }
 
+// mencari username yang dimasukkan pengguna apakah ada di dataPlayer atau tidak (iPlayer = -1 jika tidak ada)
 void cariUSN (char *targetName) {
     FILE *file = fopen("dataPlayer.dat", "rb+");
     if (!file) return;
@@ -105,8 +111,9 @@ void cariUSN (char *targetName) {
     fclose(file);
 }
 
+// menyimpan data player baru (player baru )
 void saveNPlayer() {
-    FILE *file = fopen("dataPlayer.dat", "ab");  // append binary
+    FILE *file = fopen("dataPlayer.dat", "ab");  // append binary (menambahkan data baru setelah data terahir)
     if (!file) {
         perror("Gagal membuka file");
         return;
@@ -116,6 +123,7 @@ void saveNPlayer() {
     fclose(file);
 }
 
+// memperbarui score player di file dataPlayer
 void saveNScore() {
     FILE *file = fopen("dataPlayer.dat", "rb+");  // read + write
     if (!file) {
@@ -126,12 +134,13 @@ void saveNScore() {
     // Pindah ke posisi index
     fseek(file, iPlayer * sizeof(player), SEEK_SET);
 
-    // Tulis data baru di posisi itu
+    // Tulis data baru
     fwrite(&playerNow, sizeof(player), 1, file);
 
     fclose(file);
 }
 
+// pesan bahwa untuk memulai game harus login
 void loginMessage() {
     int mid = (widthT - 36 - 1 ) / 2  ;
     WINDOW * logM = newwin(3, 36, 14, mid) ;
@@ -151,23 +160,23 @@ void loginMessage() {
     delWin(logM) ;  
 }
 
+// UI ketika user mengetikkan username
 void inputUSN(char *usn, WINDOW * logP) {
     int index = 0 ;
     
     while (1) {
         int ch = wgetch(logP);
         
-        // ENTER ditekan → selesai
+        // selesai ketika user menekan enter
         if (ch == '\n' || ch == KEY_ENTER) {
             break;
         }
         
-        // BACKSPACE ditekan
+        // backspace ditekan maka menghapus char di screen dan di array
         if ((ch == KEY_BACKSPACE || ch == 127 || ch == 8) && index > 0) {
             index--;
             usn[index] = '\0';
             
-            // hapus karakter terakhir secara visual
             mvwprintw(logP, 2, 2 + index, " ");
             wmove(logP, 2, 2 + index);
             
@@ -175,10 +184,10 @@ void inputUSN(char *usn, WINDOW * logP) {
             continue;
         }
         
-        // batasi panjang input
+        // maksimal username 25
         if (index >= 25) continue;
         
-        // hanya izinkan huruf/angka/spasi (opsional)
+        // hanya izinkan huruf/angka/spasi
         if (isprint(ch)) {
             usn[index] = ch;
             index++ ;
@@ -190,6 +199,7 @@ void inputUSN(char *usn, WINDOW * logP) {
     usn[index] = '\0' ;
 }
 
+// tampilan untuk meminta konfirmasi membuat player baru (username baru)
 bool konfirmNP() {
     int mid = (widthT - 50 - 1 ) / 2 ;
     WINDOW * newP = newwin(4, 50, 15, mid) ;
@@ -245,6 +255,7 @@ bool konfirmNP() {
     else return false ;
 }
 
+// proses login
 void loginProses() {
     int mid = (widthT - 30 - 1 ) / 2  ;
     WINDOW * logP = newwin(5, 30, 15, mid) ;
@@ -256,18 +267,17 @@ void loginProses() {
     
     char usn[30] ;
     memset(usn, 0, sizeof(usn)) ;
-    inputUSN(usn, logP) ;
-    cariUSN(usn) ;
+    inputUSN(usn, logP) ; // user memasukkan usn
+    cariUSN(usn) ;  // mencari apakah username ada di dataPlayer (iPlayer = -1 jika tidak ada)
 
     if(iPlayer == -1) {
-        if(!konfirmNP()){
+        if(!konfirmNP()){ // user tidak ingin membuat player baru
             delWin(logP) ;
             return ;   
-        }else{
-            strcpy(playerNow.username, usn);
+        }else{  // user ingin membuat player baru
             playerNow.bestScore = 0 ;
             saveNPlayer() ;
-            cariUSN(playerNow.username) ;
+            cariUSN(playerNow.username) ;  // memberikan nilai ke iPlayer (untuk save score terbaru)
         }
     }
     
@@ -277,13 +287,16 @@ void loginProses() {
     delWin(logP) ;
 }
 
+// memperlihatkan leaderboard 10 player dengan score terbesar
 void leaderboard(int WidthM) {
-    FILE *file = fopen("dataPlayer.dat", "rb");
+    FILE *file = fopen("dataPlayer.dat", "rb");  // read
     if (!file) return;
 
     player allPlayer [100] ;
     player tmp ;
     int index = 0 ;
+
+    // membaca dataPlayer dan menyimpan di array allPlayer
     while (fread(&tmp, sizeof(player), 1, file) == 1) {
         allPlayer[index] = tmp ;
         index++ ;
@@ -293,7 +306,7 @@ void leaderboard(int WidthM) {
 
     if(index == 0)return ;
 
-    mergeSort(allPlayer, 0, index-1) ;
+    mergeSort(allPlayer, 0, index-1) ; // mengurutkan player 
     
     char *leaderText[] = {
         "█░░ █▀▀ █▀▀█ █▀▀▄ █▀▀ █▀▀█ █▀▀▄ █▀▀█ █▀▀█ █▀▀█ █▀▀▄",
@@ -315,7 +328,8 @@ void leaderboard(int WidthM) {
     colorBox(leaderP, 3) ;
     mvwprintw(leaderP, 20, 2, " Press any key to return " );
     refresh() ;
-
+    
+    // mencetak player 1 per 1
     for(int i=0; i<min(index, 10); i++) {
         mvwprintw(leaderP, i+1+i, 1, "%s", allPlayer[i].username) ;
 
@@ -332,6 +346,7 @@ void leaderboard(int WidthM) {
     delWin(leaderP) ;
 }
 
+// mencetak ular di menu utama
 void titleUI(int WidthM, WINDOW * titleWin) {
 
     // buat title
@@ -349,6 +364,7 @@ void titleUI(int WidthM, WINDOW * titleWin) {
     wrefresh(titleWin) ;
 }
 
+// menampilkan tampilan game over ketika ular mati
 void gameOver() {
     // deklarasi string ASCII yang akan dicetak
     
@@ -388,6 +404,7 @@ void gameOver() {
     delWin(temp) ;
 }
 
+// menampilkan pilihan di menu utama dan menerima input (keypad)
 int pilihanMenu(int WidthM, WINDOW * mainMenu) {
     // pilihan
     char *choices [] = {
@@ -406,6 +423,7 @@ int pilihanMenu(int WidthM, WINDOW * mainMenu) {
     keypad(pilihan, true) ;
     refresh() ;
     
+    // jika sudah login tampilkan username di kiri atas 
     if(login) mvwprintw(mainMenu, 0, 3, " %s ", playerNow.username) ;
     wrefresh(mainMenu) ;
     
@@ -445,12 +463,15 @@ int pilihanMenu(int WidthM, WINDOW * mainMenu) {
     return highlight ;
 }
 
+// menampilkan menu utama, titleUI dan pilihanMenu digunakan disini
 void menuUtama() {
 startGame1:
-    // cek ukuran terminal user
+    // mendapatkan ukuran terminal user
     getmaxyx(stdscr, heightT, widthT) ;
     
     int HeightM = 35, WidthM = 80 ;
+
+    // jika terminal user kurang dari minimal maka program tidak lanjut dan memberikan pesan dibawah
     if(heightT < MinHeight || widthT < MinWidth){
         endGame() ;
         fprintf(stderr,
@@ -458,9 +479,8 @@ startGame1:
             "Perbesar terminal anda setidaknya %d (Horizontal) x %d (Vertikal) lalu coba lagi.\n",
             widthT, heightT, MinWidth, MinHeight);
             exit(0);
-        }
+    }
         
-    // menetapkan letak window untuk snake game dan menu utama
     startX = (widthT - gameWidth - 1 ) / 2 ; 
     
     // buat window untuk main menu
@@ -503,17 +523,19 @@ startGame3:
         }
 
         gameOver() ;
-        if(playerNow.bestScore < score) playerNow.bestScore = score ;
-        saveNScore() ;
+        if(playerNow.bestScore < score) {
+            playerNow.bestScore = score ; // memperbarui best score jika score lebih besar
+            saveNScore() ; // menyimpan score baru
+        }
         wclear(snakeWin) ;
         wrefresh(snakeWin) ;
-        goto startGame1 ;
+        goto startGame1 ; // kembali ke menu utama
         break;
         
-        case 1:
+        case 1:  // menampilkan leaderboard
             delWin(titleWin) ;
             leaderboard(WidthM) ;
-            goto startGame2 ;
+            goto startGame2 ;  // kembali ke menu utama
             break ;
         case 2:  //quit game
             delWin(mainMenu) ;
@@ -527,7 +549,7 @@ startGame3:
             }else{
                 loginProses() ;
             }
-            goto startGame3 ;
+            goto startGame3 ;  // kembali ke menu utama
             break ;
         default:
         break;

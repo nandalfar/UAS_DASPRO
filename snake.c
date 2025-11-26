@@ -19,25 +19,28 @@ int pBadan ;
 koordinat kepala, apel, gerak, badan[1000] ;
 WINDOW * snakeWin ;
 
-
+// mencetak (bisa semua tipe data) dengan warna
 void printWcolor(WINDOW * curWin, int y, int x, char *s, int color) {
     wattron(curWin, COLOR_PAIR(color)) ;
     mvwprintw(curWin, y, x, "%s", s) ;
     wattroff(curWin, COLOR_PAIR(color)) ;
 }
 
+// mencetak karakter berwarna
 void charWcolor(WINDOW * curWin, int y, int x, char s, int color) {
     wattron(curWin, COLOR_PAIR(color)) ;
     mvwaddch(curWin, y, x, s) ;
     wattroff(curWin, COLOR_PAIR(color)) ;
 }
 
+// membuat border berwarna
 void colorBox(WINDOW * curWin, int color) {
     wattron(curWin, COLOR_PAIR(color)) ;
     box(curWin, 0, 0) ;
     wattroff(curWin, COLOR_PAIR(color)) ;
 }
 
+// menghapus WINDOW yang sudah tidak digunakan
 void delWin(WINDOW * tmp) {
     wclear(tmp) ;
     wrefresh(tmp) ;
@@ -45,6 +48,7 @@ void delWin(WINDOW * tmp) {
     refresh() ;
 }
 
+// cek apakah 2 karakter (ular dan apel) berada di posisi yang sama
 bool cek1 (koordinat a, koordinat b) {
     if(a.x != b.x) return false ;
     if(a.y != b.y) return false ;
@@ -52,6 +56,7 @@ bool cek1 (koordinat a, koordinat b) {
     return true ;
 }
 
+// memeriksa apakah posisi kepala ular saat ini mati (kena dinding dan badan ular)
 bool cek_mati() {
     for(int i=0; i<pBadan; i++) {
         if(kepala.x == badan[i].x && kepala.y == badan[i].y) {
@@ -66,6 +71,8 @@ bool cek_mati() {
     }
     return false ;
 }
+
+// spawn apel baru serta memastikan koordinat tidak sama dengan ular
 void spawn_apel() {
     apel.x = 1 + rand() % (gameWidth - 2) ; 
     apel.y = 1 + rand() % (gameHeight - 2) ;
@@ -75,6 +82,7 @@ void spawn_apel() {
     }
 }
 
+// mempersiapkan game ular (WINDOW, variabel, dll)
 void initSnake() {
     lanjut = true ;
     pBadan = 0 ;
@@ -96,6 +104,7 @@ void initSnake() {
     wrefresh(snakeWin) ;
 }
 
+// game selesai, mengakhiri ncurses dan menampilkan kursor kembali
 void endGame() {
     curs_set(1) ;
     endwin() ;
